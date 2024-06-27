@@ -11,7 +11,8 @@ from nonebot.adapters import Event
 from nonebot.adapters import Bot
 from nonebot_plugin_userinfo import get_user_info
 from nonebot.adapters.onebot.v11 import PrivateMessageEvent, GroupMessageEvent
-
+import shutil
+import os
 import copy
 import json
 import base64
@@ -22,9 +23,13 @@ help = on_command("help", rule=to_me(), aliases={"help", "帮助"}, priority=10,
 default = on_command("ex", rule=to_me(), aliases={"default", "默认配置"}, priority=10, block=True)
 setuToGroup = on_command("pg", rule=to_me(), aliases={"setuToGroup", "给群聊发图片"}, priority=10, block=True)
 p2p = on_command("p2p", rule=to_me(), aliases={"p2p", "p2p"}, priority=10, block=True)
+data = on_command("data", rule=to_me(), aliases={"data", "p2p data"}, priority=10, block=True)
 
 qqGroup_test = 964880841
 qqGroup_main = 754954614
+
+save_dir = 'C:\\XueShengZe\\notwork\\img_for_qqbot\\'
+save_file = '\\tmp_p2p.png'
 
 current_argument = {
     'prompt': '',
@@ -115,7 +120,7 @@ default_p2p_argument = {
     'negative_prompt': '',
     "sampler_name": "Euler a",
     "scheduler": "",
-    'seed': 1234,
+    'seed': -1,
     'steps': 25,
     'width': 600,
     'height': 800,
@@ -160,12 +165,51 @@ async def handle_function1_1(bot: Bot, event: Event, args: Message = CommandArg(
     else:
         await setuToGroup.finish(f"参数解析失败")
 
+@data.handle()
+async def handle_data_function(bot: Bot, event: Event, args: Message = CommandArg()):
+    global current_argument
+    global default_argument
+    user_id = event.get_user_id()
+    if not user_id:
+        await data.finish("非法的用户id")
+    for segment in args:
+        if segment.type == "image":
+            # 获取file属性
+            file = segment.data.get("file")
+            print(f"File: {file}")
+            # 如果还需要其他属性，可以继续获取
+            url = segment.data.get("url")
+            print(f"URL: {url}")
+            # 如果需要进一步处理文件，可以在这里添加你的代码
+            # 例如，调用bot.call_api获取图片内容等
+            result = await bot.call_api("get_image", file=file)
+            file_addr = result['file']
+            print(file_addr)
+            ####################
+            # 定义源文件路径和目标文件路径
+            save_folder = user_id
+            # 复制文件
+            target_folder = "".join([save_dir, save_folder])
+            target_dir = "".join([save_dir, save_folder, save_file])
+            if not os.path.exists(target_folder):
+                os.makedirs(target_folder)
+            shutil.copy(file_addr, target_dir)
+            with Image.open(target_dir) as img:
+                width, height = img.size
+                if width > 3840 or height > 2160:
+                    os.remove(target_dir)
+                    await p2p.finish("分辨率太高，保存失败")
+            await data.finish("".join(["用户", user_id, "的图片已保存到服务器。"]))
+    await data.finish("参数解析失败")
+
 @p2p.handle()
 async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg()):
     global current_argument
     global default_argument
     global default_p2p_argument
-    print(args)
+    user_id = event.get_user_id()
+    if not user_id:
+        await data.finish("非法的用户id")
     # 遍历Message对象中的每一个MessageSegment
     for segment in args:
         if segment.type == 'text':
@@ -174,7 +218,6 @@ async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg
             if text.startswith('-pd'):
                 # 去掉开头的 '-pd' 部分
                 trimmed_string = text[len('-pd'):].strip()
-
                 # 找到第一个空格分隔位置，分离数字部分和剩余部分
                 space_index = trimmed_string.find(' ')
                 if space_index != -1:
@@ -188,38 +231,27 @@ async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg
                     default_p2p_argument['denoising_strength'] = pd_value
                     default_p2p_argument['prompt'] = "".join([default_prompt, remaining_str])
                     default_p2p_argument['negative_prompt'] = "".join([default_negative_prompt])
-                    default_p2p_argument['seed'] = random.randint(1, 10000)
                 else:
                     await p2p.finish("参数解析失败")
-        if segment.type == "image":
-            # 获取file属性
-            file = segment.data.get("file")
-            print(f"File: {file}")
-            # 如果还需要其他属性，可以继续获取
-            url = segment.data.get("url")
-            print(f"URL: {url}")
-            # 如果需要进一步处理文件，可以在这里添加你的代码
-            # 例如，调用bot.call_api获取图片内容等
-            result = await bot.call_api("get_image", file=file)
-            file_addr = result['file']
-            print(file_addr)
-            # file_addr_res = file_addr.replace('\\\\', '\\')
-            # print(file_addr_res)
-            # await p2p.send(message=MessageSegment.image(file_addr))
-            # str = "C:\\Users\\27487\\Documents\\Tencent Files\\3504943319\\nt_qq\\nt_data\\Pic\\2024-06\\Ori\\2d00eb6f264d29f756f3c2ada8007c59.jpeg"
-            with Image.open(file_addr) as img:
-                width, height = img.size
-                if width > 3840 or height > 2160:
-                    await p2p.finish("哼，才不会让你炸显存呢！")
-                default_p2p_argument['width'] = width
-                default_p2p_argument['height'] = height
-            with open(file_addr, 'rb') as file:
-                image_data = file.read()
-            encoded_image = base64.b64encode(image_data).decode('utf-8')
-            default_p2p_argument['init_images'] = [encoded_image]
-            image_path = await get_p2p(default_p2p_argument)
-            await p2p.finish(MessageSegment.image(image_path))
-    await p2p.finish()
+
+    img_addr = "".join([save_dir, user_id, save_file])
+    try:
+        # 尝试打开图像文件
+        with Image.open(img_addr) as img:
+            width, height = img.size
+            default_p2p_argument['width'] = width
+            default_p2p_argument['height'] = height
+            print(f"Image opened successfully: {img_addr}")
+    except IOError as e:
+        print(f"Failed to open image {img_addr}: {e}")
+        await p2p.finish("小笨蛋，你还没上传过图片呢~")
+    with open(img_addr, 'rb') as file:
+        ima_data = file.read()
+    await p2p.send("收到，开始生成")
+    encoded_image = base64.b64encode(ima_data).decode('utf-8')
+    default_p2p_argument['init_images'] = [encoded_image]
+    image_path = await get_p2p(default_p2p_argument)
+    await p2p.finish(MessageSegment.image(image_path))
 
 
 @help.handle()
@@ -227,7 +259,8 @@ async def handle_function2():
     await help.finish(f"使用示例: @bot + /命令 + 空格 + 模式 + 生成参数\n"
                       f"命令大全：/pic：图片生成输出至默认窗口；/pg：指定输出到群聊；/ex：获得生成参数示例\n"
                       f"模式大全：-op: 仅输入prompt，其余参数默认，种子随机；-oph: 同op模式，默认加NSFW特调LoRA；-all: 手动输入所有参数。\n"
-                      f"new : /p2p -pd <denoising_strength>(float,0-1) <prompt>(string) <image>(image)"
+                      f"图生图 : /p2p -pd <denoising_strength>(float,0-1) <prompt>(string)\n"
+                      f"上传图生图基础图片 : /data <image>(image,res<3840*2160)"
                       )
 
 @default.handle()

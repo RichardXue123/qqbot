@@ -1,16 +1,22 @@
 import random
 import re
 import nonebot
-from PIL import Image
-from nonebot import on_command
+from PIL import Image as PILImage
+from nonebot import on,on_command, on_startswith
 from nonebot.rule import to_me
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.adapters import Message
+from nonebot.adapters.onebot.v11 import Message as Message1
 from nonebot.params import CommandArg
 from nonebot.adapters import Event
 from nonebot.adapters import Bot
 from nonebot_plugin_userinfo import get_user_info
 from nonebot.adapters.onebot.v11 import PrivateMessageEvent, GroupMessageEvent
+from nonebot_plugin_alconna.uniseg import Image, UniMessage
+from nonebot.rule import is_type
+from typing import Annotated
+from nonebot.rule import startswith
 import shutil
 import os
 import copy
@@ -18,12 +24,17 @@ import json
 import base64
 import requests
 
+paint_rule = Rule(to_me(), startswith(".paint", ignorecase=False))
+
+# setu = on_startswith(".paint", ignorecase=False)
 setu = on_command("pic", rule=to_me(), aliases={"setu", "发图片"}, priority=10, block=True)
 help = on_command("help", rule=to_me(), aliases={"help", "帮助"}, priority=10, block=True)
 default = on_command("ex", rule=to_me(), aliases={"default", "默认配置"}, priority=10, block=True)
 setuToGroup = on_command("pg", rule=to_me(), aliases={"setuToGroup", "给群聊发图片"}, priority=10, block=True)
 p2p = on_command("p2p", rule=to_me(), aliases={"p2p", "p2p"}, priority=10, block=True)
 data = on_command("data", rule=to_me(), aliases={"data", "p2p data"}, priority=10, block=True)
+
+test = on_startswith(".paint", ignorecase=False)
 
 qqGroup_test = 964880841
 qqGroup_main = 754954614
@@ -47,74 +58,75 @@ default_argument = {
     'negative_prompt': '',
     "sampler_name": "Euler a",
     "scheduler": "",
-    'seed': 1234,
+    'seed': -1,
     'steps': 25,
     'width': 600,
     'height': 800,
     'cfg_scale': 7,
+    'n_iter': 1,
+    'restore_faces': True,
 }
 default_prompt = ("score_9,score_8_up,score_7_up,")
-default_negative_prompt =("(score_4,score_3,score_2,score_1), ugly, worst quality,bad hands,bad feet,")
-detail_argument={
-  "prompt": "",
-  "negative_prompt": "",
-  "styles": [
-    "string"
-  ],
-  "seed": -1,
-  "subseed": -1,
-  "subseed_strength": 0,
-  "seed_resize_from_h": -1,
-  "seed_resize_from_w": -1,
-  "sampler_name": "string",
-  "scheduler": "string",
-  "batch_size": 1,
-  "n_iter": 1,
-  "steps": 50,
-  "cfg_scale": 7,
-  "width": 512,
-  "height": 512,
-  "restore_faces": True,
-  "tiling": True,
-  "do_not_save_samples": False,
-  "do_not_save_grid": False,
-  "eta": 0,
-  "denoising_strength": 0,
-  "s_min_uncond": 0,
-  "s_churn": 0,
-  "s_tmax": 0,
-  "s_tmin": 0,
-  "s_noise": 0,
-  "override_settings": {},
-  "override_settings_restore_afterwards": True,
-  "refiner_checkpoint": "string",
-  "refiner_switch_at": 0,
-  "disable_extra_networks": False,
-  "firstpass_image": "string",
-  "comments": {},
-  "enable_hr": False,
-  "firstphase_width": 0,
-  "firstphase_height": 0,
-  "hr_scale": 2,
-  "hr_upscaler": "string",
-  "hr_second_pass_steps": 0,
-  "hr_resize_x": 0,
-  "hr_resize_y": 0,
-  "hr_checkpoint_name": "string",
-  "hr_sampler_name": "string",
-  "hr_scheduler": "string",
-  "hr_prompt": "",
-  "hr_negative_prompt": "",
-  "force_task_id": "string",
-  "sampler_index": "Euler",
-  "script_name": "string",
-  "script_args": [],
-  "send_images": True,
-  "save_images": False,
-  "alwayson_scripts": {},
-  "infotext": "string"
+default_negative_prompt = ("(score_4,score_3,score_2,score_1), ugly, worst quality,bad hands,bad feet,")
+detail_argument = {
+    "prompt": "",
+    "negative_prompt": "",
+    "styles": [
+        "string"
+    ],
+    "seed": -1,
+    "subseed": -1,
+    "subseed_strength": 0,
+    "seed_resize_from_h": -1,
+    "seed_resize_from_w": -1,
+    "sampler_name": "string",
+    "scheduler": "string",
+    "batch_size": 1,
+    "n_iter": 1,
+    "steps": 50,
+    "cfg_scale": 7,
+    "width": 512,
+    "height": 512,
+    "restore_faces": True,
+    "tiling": True,
+    "do_not_save_samples": False,
+    "do_not_save_grid": False,
+    "eta": 0,
+    "denoising_strength": 0,
+    "s_min_uncond": 0,
+    "s_churn": 0,
+    "s_tmax": 0,
+    "s_tmin": 0,
+    "s_noise": 0,
+    "override_settings": {},
+    "override_settings_restore_afterwards": True,
+    "refiner_checkpoint": "string",
+    "refiner_switch_at": 0,
+    "disable_extra_networks": False,
+    "firstpass_image": "string",
+    "comments": {},
+    "enable_hr": False,
+    "firstphase_width": 0,
+    "firstphase_height": 0,
+    "hr_scale": 2,
+    "hr_upscaler": "string",
+    "hr_second_pass_steps": 0,
+    "hr_resize_x": 0,
+    "hr_resize_y": 0,
+    "hr_checkpoint_name": "string",
+    "hr_sampler_name": "string",
+    "hr_scheduler": "string",
+    "hr_prompt": "",
+    "hr_negative_prompt": "",
+    "force_task_id": "string",
+    "sampler_index": "Euler",
+    "script_name": "string",
+    "script_args": [],
+    "send_images": True,
+    "save_images": False,
+    "alwayson_scripts": {},
+    "infotext": "string"
 }
-
 default_p2p_argument = {
     'prompt': 'evil',
     'negative_prompt': '',
@@ -131,6 +143,15 @@ default_p2p_argument = {
     "denoising_strength": 0.5
 }
 
+@test.handle()
+async def _(bot: Bot, event: Event):
+    group_member_info_json = await bot.get_group_member_info(group_id=qqGroup_main, user_id=event.get_user_id(),
+                                                             no_cache=True)
+    username = group_member_info_json['card'] if group_member_info_json['card'] \
+        else (group_member_info_json['nickname'] if group_member_info_json['nickname']
+              else group_member_info_json['user_id'])
+    await test.finish(Message1(username+"，我是你爹"))
+
 @setu.handle()
 async def handle_function1(args: Message = CommandArg()):
     global current_argument
@@ -141,10 +162,13 @@ async def handle_function1(args: Message = CommandArg()):
     print(current_argument)
     if args_legal:
         await setu.send("收到，开始生成")
-        image_path = await get_data(current_argument)
-        await setu.finish(MessageSegment.image(image_path))
+        image_paths = await get_data(current_argument)
+        for image_path in image_paths:
+            await setu.send(MessageSegment.image(image_path))
+        await setu.finish("所有图片已生成")
     else:
         await setu.finish(f"参数解析失败")
+
 
 @setuToGroup.handle()
 async def handle_function1_1(bot: Bot, event: Event, args: Message = CommandArg()):
@@ -153,7 +177,8 @@ async def handle_function1_1(bot: Bot, event: Event, args: Message = CommandArg(
     arg_text = args.extract_plain_text().strip()
     args_legal = read_args(arg_text)
     if args_legal:
-        group_member_info_json = await bot.get_group_member_info(group_id=qqGroup_main, user_id=event.get_user_id(), no_cache=True)
+        group_member_info_json = await bot.get_group_member_info(group_id=qqGroup_main, user_id=event.get_user_id(),
+                                                                 no_cache=True)
         await setuToGroup.send("收到，开始生成")
         image_path = await get_data(current_argument)
         await bot.send_group_msg(group_id=qqGroup_main, message=MessageSegment.image(image_path))
@@ -164,6 +189,7 @@ async def handle_function1_1(bot: Bot, event: Event, args: Message = CommandArg(
         await setuToGroup.finish()
     else:
         await setuToGroup.finish(f"参数解析失败")
+
 
 @data.handle()
 async def handle_data_function(bot: Bot, event: Event, args: Message = CommandArg()):
@@ -194,13 +220,14 @@ async def handle_data_function(bot: Bot, event: Event, args: Message = CommandAr
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)
             shutil.copy(file_addr, target_dir)
-            with Image.open(target_dir) as img:
+            with PILImage.open(target_dir) as img:
                 width, height = img.size
                 if width > 3840 or height > 2160:
                     os.remove(target_dir)
                     await p2p.finish("分辨率太高，保存失败")
             await data.finish("".join(["用户", user_id, "的图片已保存到服务器。"]))
     await data.finish("参数解析失败")
+
 
 @p2p.handle()
 async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg()):
@@ -237,7 +264,7 @@ async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg
     img_addr = "".join([save_dir, user_id, save_file])
     try:
         # 尝试打开图像文件
-        with Image.open(img_addr) as img:
+        with PILImage.open(img_addr) as img:
             width, height = img.size
             default_p2p_argument['width'] = width
             default_p2p_argument['height'] = height
@@ -263,9 +290,11 @@ async def handle_function2():
                       f"上传图生图基础图片 : /data <image>(image,res<3840*2160)"
                       )
 
+
 @default.handle()
 async def handle_function3():
     await help.finish(json.dumps(default_argument))
+
 
 def read_args(arg_text):
     global current_argument
@@ -286,7 +315,7 @@ def read_args(arg_text):
         elif arg_text.startswith('-all'):
             user_data = json.loads(arg_text[4:].strip())
             required_keys = {'prompt', 'negative_prompt', 'sampler_name', 'scheduler', 'seed', 'steps', 'width',
-                             'height', 'cfg_scale'}
+                             'height', 'cfg_scale', 'n_iter', 'restore_faces'}
             if not required_keys.issubset(user_data.keys()):
                 raise ValueError("缺少必要的键")
             current_argument = copy.copy(user_data)
@@ -298,13 +327,21 @@ def read_args(arg_text):
     print(current_argument)
     return True
 
+
 async def get_data(user_data):
     txt2img_url = r'http://127.0.0.1:7861/sdapi/v1/txt2img'
     response = submit_post(txt2img_url, user_data)
-    save_image_path = r'C:\XueShengZe\notwork\img_for_qqbot\tmp.png'
-    save_encoded_image(response.json()['images'][0], save_image_path)
+    image_paths = []
+    for i in range(user_data['n_iter']):
+        save_image_path = rf'C:\XueShengZe\notwork\img_for_qqbot\tmp_{i + 1}.png'
+        save_encoded_image(response.json()['images'][i], save_image_path)
+        image_paths.append(save_image_path)
+    return image_paths
+    #save_image_path = r'C:\XueShengZe\notwork\img_for_qqbot\tmp.png'
+    #save_encoded_image(response.json()['images'][0], save_image_path)
 
-    return save_image_path
+    #return save_image_path
+
 
 async def get_p2p(user_prompt):
     txt2img_url = r'http://127.0.0.1:7861/sdapi/v1/img2img'
@@ -317,9 +354,10 @@ async def get_p2p(user_prompt):
 
     return save_image_path
 
+
 def is_resolution_within_limit(image_path, limit=1200):
     global default_p2p_argument
-    with Image.open(image_path) as img:
+    with PILImage.open(image_path) as img:
         width, height = img.size
         if width > limit or height > limit:
             return False
@@ -327,8 +365,10 @@ def is_resolution_within_limit(image_path, limit=1200):
         default_p2p_argument['height'] = height
         return True
 
+
 def submit_post(url: str, data: dict):
     return requests.post(url, data=json.dumps(data))
+
 
 # 解码并保存图片
 def save_encoded_image(b64_image: str, output_path: str):

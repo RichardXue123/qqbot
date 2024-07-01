@@ -64,7 +64,6 @@ default_argument = {
     'height': 800,
     'cfg_scale': 7,
     'n_iter': 1,
-    'restore_faces': True,
 }
 default_prompt = ("score_9,score_8_up,score_7_up,")
 default_negative_prompt = ("(score_4,score_3,score_2,score_1), ugly, worst quality,bad hands,bad feet,")
@@ -315,7 +314,7 @@ def read_args(arg_text):
         elif arg_text.startswith('-all'):
             user_data = json.loads(arg_text[4:].strip())
             required_keys = {'prompt', 'negative_prompt', 'sampler_name', 'scheduler', 'seed', 'steps', 'width',
-                             'height', 'cfg_scale', 'n_iter', 'restore_faces'}
+                             'height', 'cfg_scale', 'n_iter'}
             if not required_keys.issubset(user_data.keys()):
                 raise ValueError("缺少必要的键")
             current_argument = copy.copy(user_data)

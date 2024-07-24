@@ -1,4 +1,4 @@
-# qqbot
+# QQBOT
 
 ## TODO
 

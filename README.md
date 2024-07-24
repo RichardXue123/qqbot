@@ -2,14 +2,17 @@
 
 ## TODO
 
-1. **Refactor the WebUI Plugin**
-   - Improve the existing webui plugin for better performance and usability.
+1. **Determine Project Structure**
+   - Define the overall architecture and organization of the project.
 
-2. **Simplify User Parameter Input**
-   - Streamline the process of user input for a more intuitive experience.
+2. **Establish Plugin Template**
+   - Create a standard template for plugins to ensure consistency and ease of development.
 
-3. **Other QQ Bot Features**
-   - Implement additional features to enhance the functionality of the QQ bot.
+3. **Refactor WebUI Plugin**
+   - Refactor the WebUI plugin to improve its functionality and integrate it with the project's standards.
+
+4. **Set Up GitHub Actions**
+   - Configure continuous integration and deployment workflows using GitHub Actions.
 
 ## Documentation
 

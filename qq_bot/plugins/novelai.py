@@ -92,7 +92,7 @@ setuToGroup = on_command("pg", rule=to_me(), aliases={"setuToGroup", "给群聊�
 p2p = on_command("p2p", rule=to_me(), aliases={"p2p", "p2p"}, priority=10, block=True)
 data = on_command("data", rule=to_me(), aliases={"data", "p2p data"}, priority=10, block=True)
 
-help = on_startswith(".taffy,help", ignorecase=False)
+help = on_startswith(".taffyhelp", ignorecase=False)
 test = on_startswith(".paint", ignorecase=False)
 getconfex = on_startswith(".getconfex", ignorecase=False)
 setconfig = on_startswith(".setconfig", ignorecase=False)
@@ -367,12 +367,14 @@ async def _(bot: Bot, event: Event):
     user_id = event.get_user_id()
     # 从user_args中获取用户配置
     user_arg = user_args.get_user_arguments(user_id)
+    if not user_arg:
+        await draw.finish("你还没有配置好哦~ 快去设置一下吧~ (≧ω≦)/")
     # 响应用户
     print(user_arg)
     await draw.send("好哒，正在为你生成呢~ (≧▽≦)/✧")
     image_paths = await get_data(user_arg)
     for image_path in image_paths:
-        await draw.send(MessageSegment.image(image_path))
+        await draw.send(MessageSegment.image(f'file:///{image_path}'))
     await draw.finish("所有图片都生成好啦~ (≧ω≦)/✿✨")
 
 
@@ -388,7 +390,7 @@ async def _(bot: Bot, event: Event):
         await setu.send("收到，开始生成")
         image_paths = await get_data(current_argument)
         for image_path in image_paths:
-            await setu.send(MessageSegment.image(image_path))
+            await setu.send(MessageSegment.image(f'file:///{image_path}'))
         if session_id.startswith('group'):
             # 判断为群聊
             try:
@@ -560,6 +562,7 @@ async def handle_function2():
                       ".getlora\n"
                       ".getsdmodel\n"
                       ".setsdmodel\n"
+                      "JOIN US: https://github.com/RichardXue123/qqbot\n"
                       )
 
 

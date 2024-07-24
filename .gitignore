@@ -1,1 +1,3 @@
 qq_bot/plugins/__pycache__/
+qq_bot/plugins/*/__pycache__/
+.idea/

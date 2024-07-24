@@ -39,8 +39,8 @@ test = on_startswith(".paint", ignorecase=False)
 qqGroup_test = 964880841
 qqGroup_main = 754954614
 
-save_dir = 'C:\\XueShengZe\\notwork\\img_for_qqbot\\'
-save_file = '\\tmp_p2p.png'
+save_dir = '/home/richardxue/notwork/qqbot_data'
+save_file = 'tmp_p2p.png'
 
 current_argument = {
     'prompt': '',
@@ -162,8 +162,10 @@ async def handle_function1(args: Message = CommandArg()):
     if args_legal:
         await setu.send("收到，开始生成")
         image_paths = await get_data(current_argument)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        print(image_paths)
         for image_path in image_paths:
-            await setu.send(MessageSegment.image(image_path))
+            await setu.send(MessageSegment.image(f'file:///{image_path}'))
         await setu.finish("所有图片已生成")
     else:
         await setu.finish(f"参数解析失败")
@@ -180,7 +182,7 @@ async def handle_function1_1(bot: Bot, event: Event, args: Message = CommandArg(
                                                                  no_cache=True)
         await setuToGroup.send("收到，开始生成")
         image_path = await get_data(current_argument)
-        await bot.send_group_msg(group_id=qqGroup_main, message=MessageSegment.image(image_path))
+        await bot.send_group_msg(group_id=qqGroup_main, message=MessageSegment.image(f'file:///{image_path}'))
         username = group_member_info_json['card'] if group_member_info_json['card'] \
             else (group_member_info_json['nickname'] if group_member_info_json['nickname']
                   else group_member_info_json['user_id'])
@@ -214,8 +216,8 @@ async def handle_data_function(bot: Bot, event: Event, args: Message = CommandAr
             # 定义源文件路径和目标文件路径
             save_folder = user_id
             # 复制文件
-            target_folder = "".join([save_dir, save_folder])
-            target_dir = "".join([save_dir, save_folder, save_file])
+            target_folder = os.path.join(save_dir, save_folder)
+            target_dir = os.path.join(save_dir, save_folder, save_file)
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)
             shutil.copy(file_addr, target_dir)
@@ -260,7 +262,7 @@ async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg
                 else:
                     await p2p.finish("参数解析失败")
 
-    img_addr = "".join([save_dir, user_id, save_file])
+    img_addr = os.path.join(save_dir, user_id, save_file)
     try:
         # 尝试打开图像文件
         with PILImage.open(img_addr) as img:
@@ -277,7 +279,7 @@ async def handle_p2p_function(bot: Bot, event: Event, args: Message = CommandArg
     encoded_image = base64.b64encode(ima_data).decode('utf-8')
     default_p2p_argument['init_images'] = [encoded_image]
     image_path = await get_p2p(default_p2p_argument)
-    await p2p.finish(MessageSegment.image(image_path))
+    await p2p.finish(MessageSegment.image(f'file:///{image_path}'))
 
 
 @help.handle()
@@ -332,14 +334,10 @@ async def get_data(user_data):
     response = submit_post(txt2img_url, user_data)
     image_paths = []
     for i in range(user_data['n_iter']):
-        save_image_path = rf'C:\XueShengZe\notwork\img_for_qqbot\tmp_{i + 1}.png'
+        save_image_path = os.path.join(save_dir,f'tmp_{i + 1}.png')
         save_encoded_image(response.json()['images'][i], save_image_path)
         image_paths.append(save_image_path)
     return image_paths
-    #save_image_path = r'C:\XueShengZe\notwork\img_for_qqbot\tmp.png'
-    #save_encoded_image(response.json()['images'][0], save_image_path)
-
-    #return save_image_path
 
 
 async def get_p2p(user_prompt):
@@ -348,7 +346,7 @@ async def get_p2p(user_prompt):
     print(user_prompt['negative_prompt'])
     print(user_prompt['denoising_strength'])
     response = submit_post(txt2img_url, user_prompt)
-    save_image_path = r'C:\XueShengZe\notwork\img_for_qqbot\tmp.png'
+    save_image_path = save_image_path = os.path.join(save_dir,f'tmp_p2p.png')
     save_encoded_image(response.json()['images'][0], save_image_path)
 
     return save_image_path

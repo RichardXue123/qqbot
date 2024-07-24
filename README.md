@@ -1,11 +1,18 @@
 # qqbot
 
-## How to start
+## TODO
 
-1. generate project using `nb create` .
-2. install plugins using `nb plugin install` .
-3. run your bot using `nb run` .
+1. **Refactor the WebUI Plugin**
+   - Improve the existing webui plugin for better performance and usability.
+
+2. **Simplify User Parameter Input**
+   - Streamline the process of user input for a more intuitive experience.
+
+3. **Other QQ Bot Features**
+   - Implement additional features to enhance the functionality of the QQ bot.
 
 ## Documentation
 
-See [Docs](https://nonebot.dev/)
+[Nonebot Docs](https://nonebot.dev/)
+[NapCatQQ Docs](https://napneko.github.io/zh-CN/)
+[My Webui Project Link](https://github.com/RichardXue123/stable-diffusion-webui)

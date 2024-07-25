@@ -9,7 +9,7 @@
      ```
       .
       │  bot.py
-      └─qq_bot
+      └─src
          └─plugins
             │  some_plugin1.py
             │
@@ -20,6 +20,7 @@
 
 2. **Establish Plugin Template**
    - Create a standard template for plugins to ensure consistency and ease of development.
+   
 
 3. **Generate Unit Test Pipeline for plugins**
    - Establish a unit test pipeline, including document and testing scripts for plugins.

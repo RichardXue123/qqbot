@@ -4,7 +4,7 @@ from nonebot.matcher import Matcher
 from nonebot.adapters import Message
 from nonebot.params import CommandArg, ArgPlainText
 
-weather = on_command("天气", rule=to_me(), aliases={"weather", "天气预报"})
+weather = on_command("天气", aliases={"weather", "天气预报"})
 
 @weather.handle()
 async def handle_function(matcher: Matcher, args: Message = CommandArg()):

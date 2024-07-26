@@ -56,5 +56,22 @@ async def test_weather(app: App):
         ctx.should_call_send(event, "今天北京的天气是...", result=None)
         ctx.should_finished(weather)
 
+    async with app.test_matcher(weather) as ctx:
+        bot = ctx.create_bot()
+        event = make_event("/天气")
+        ctx.receive_event(bot, event)
+        ctx.should_call_send(event, "请输入地名", result=None)
+        ctx.should_rejected(weather)
+        event = make_event(" ")
+        ctx.receive_event(bot, event)
+        ctx.should_call_send(event, "你想查询的城市   暂不支持，请重新输入！", result=None)
+        ctx.should_rejected(weather)
+        event = make_event("北京")
+        ctx.receive_event(bot, event)
+        ctx.should_call_send(event, "今天北京的天气是...", result=None)
+        ctx.should_finished(weather)
+
+
+
 if __name__ == "__main__":
     make_event("test")
